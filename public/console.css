@@ -1,0 +1,34 @@
+:root { color-scheme: dark; }
+body {
+  margin: 0; display: grid; grid-template-columns: 1fr 260px;
+  height: 100vh; background: #14161a; color: #e8eaed;
+  font: 14px/1.5 system-ui, sans-serif;
+}
+main { position: relative; display: grid; place-items: center; }
+canvas { background: #1c1f24; border-radius: 8px; cursor: crosshair; }
+#blocker {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  background: rgba(0, 0, 0, 0.66); font-size: 18px; font-weight: 600;
+  text-align: center; padding: 0 24px; border-radius: 8px;
+}
+/* 덮개가 아니라 배너다. 보정 중에는 존 사각형이 계속 보여야 맞출 수 있다. */
+#calibBanner {
+  position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+  padding: 6px 14px; border-radius: 6px;
+  background: #7a5c1f; color: #ffd666; font-weight: 600; font-size: 13px;
+  white-space: nowrap;
+}
+#readout { position: absolute; bottom: 12px; color: #9aa0a6; }
+aside { padding: 16px; border-left: 1px solid #2a2e35; overflow-y: auto; }
+aside h1 { font-size: 20px; margin: 0 0 12px; display: flex; gap: 8px; align-items: center; }
+aside h2 { font-size: 12px; color: #9aa0a6; margin: 20px 0 6px; text-transform: uppercase; }
+aside button, aside select { width: 100%; padding: 9px; margin-bottom: 6px;
+  background: #2a2e35; color: inherit; border: 1px solid #3a3f47; border-radius: 6px; cursor: pointer; }
+aside button:disabled { opacity: 0.4; cursor: not-allowed; }
+aside button.armed { background: #7a2c2c; border-color: #a33; }
+aside label { display: block; margin-bottom: 8px; color: #c4c7cc; }
+aside input[type="range"] { width: 100%; }
+#statusBadge { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: #3a3f47; }
+#statusBadge.live { background: #1f6f3f; }
+#conn { color: #f28b82; }
+#conn.ok { color: #81c995; }

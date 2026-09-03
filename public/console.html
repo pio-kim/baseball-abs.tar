@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <title>ABS 콘솔</title>
+    <link rel="stylesheet" href="./console.css" />
+  </head>
+  <body>
+    <main>
+      <canvas id="stage"></canvas>
+      <div id="blocker" hidden><span id="blockerText"></span></div>
+      <div id="calibBanner" hidden>보정 모드 — 존 클릭이 기록되지 않습니다</div>
+      <p id="readout">투구 0 · S 0 · B 0</p>
+    </main>
+    <aside>
+      <h1><span id="inningLabel">1회</span> <span id="statusBadge">IDLE</span></h1>
+      <button id="btnStart">이닝 시작</button>
+      <button id="btnEnd">이닝 종료</button>
+      <button id="btnNext" data-confirm="다음 이닝으로?">다음 이닝</button>
+
+      <h2>다시보기</h2>
+      <select id="inningSelect"></select>
+      <button id="btnReview">보기</button>
+      <button id="btnLive">라이브 복귀</button>
+
+      <h2>편집</h2>
+      <button id="btnUndo">되돌리기 ⌃Z</button>
+      <button id="btnDelete">선택 삭제</button>
+      <button id="btnClear" data-confirm="정말 지울까요?">모두 지우기</button>
+
+      <h2>보정</h2>
+      <label><input type="checkbox" id="chkCalib" /> 보정 모드 (C)</label>
+      <label>존 종횡비 <input type="range" id="rngAspect" min="0.5" max="2" step="0.01" /></label>
+      <label>송출 X <input type="range" id="rngX" min="0" max="1" step="0.005" /></label>
+      <label>송출 Y <input type="range" id="rngY" min="0" max="1" step="0.005" /></label>
+      <label>송출 크기 <input type="range" id="rngScale" min="0.05" max="0.6" step="0.005" /></label>
+
+      <p id="conn">● 연결 중…</p>
+    </aside>
+    <script type="module" src="./console.js"></script>
+  </body>
+</html>
