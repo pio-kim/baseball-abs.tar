@@ -11,6 +11,12 @@ canvas { background: #1c1f24; border-radius: 8px; cursor: crosshair; }
   background: rgba(0, 0, 0, 0.66); font-size: 18px; font-weight: 600;
   text-align: center; padding: 0 24px; border-radius: 8px;
 }
+/* 위 규칙의 display:grid(저자 스타일)는 브라우저 기본 스타일시트의
+   [hidden]{display:none}을 이긴다 — 저자 스타일이 항상 UA 스타일보다 우선한다.
+   그래서 blocker.hidden = true 여도 막이 캔버스 위에 그대로 남아 클릭을 전부
+   삼켰다(존을 찍어도 공이 안 나타남). display를 지정하는 규칙에 hidden을 함께
+   쓸 때는 이 짝이 반드시 있어야 한다. */
+#blocker[hidden] { display: none; }
 /* 덮개가 아니라 배너다. 보정 중에는 존 사각형이 계속 보여야 맞출 수 있다. */
 #calibBanner {
   position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
