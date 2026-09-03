@@ -138,6 +138,11 @@ function refreshChrome() {
   document.getElementById('btnStart').disabled = !local.connected || reviewing || st === 'live';
   document.getElementById('btnEnd').disabled = !local.connected || reviewing || st !== 'live';
   document.getElementById('btnNext').disabled = !local.connected || reviewing || st !== 'ended';
+  // 이전 이닝은 이닝 상태를 가리지 않는다. 잘못 기록한 걸 고치러 돌아가는
+  // 용도라 live 중에도 쓸 수 있어야 한다. 1회에서만 막는다.
+  document.getElementById('btnPrev').disabled =
+    !local.connected || reviewing || (s?.game.inning ?? 1) <= 1;
+  document.getElementById('btnReset').disabled = !local.connected || reviewing;
   document.getElementById('btnLive').disabled = !reviewing;
   document.getElementById('btnReview').disabled = !local.connected || reviewing;
   for (const id of ['btnUndo', 'btnDelete', 'btnClear']) {
@@ -323,6 +328,9 @@ const hasPitches = () => (local.snap?.state.game.pitches.length ?? 0) > 0;
 document.getElementById('btnStart').addEventListener('click', () => send({ type: 'INNING_START' }));
 document.getElementById('btnEnd').addEventListener('click', () => send({ type: 'INNING_END' }));
 wireConfirm(document.getElementById('btnNext'), () => send({ type: 'INNING_NEXT' }), hasPitches);
+wireConfirm(document.getElementById('btnPrev'), () => send({ type: 'INNING_PREV' }), hasPitches);
+// 초기화는 공이 없어도 이닝 번호를 되돌린다. 잃을 게 없어 보여도 항상 두 번 눌러야 한다.
+wireConfirm(document.getElementById('btnReset'), () => send({ type: 'INNING_RESET' }), () => true);
 wireConfirm(document.getElementById('btnClear'), () => send({ type: 'PITCH_CLEAR_ALL' }), hasPitches);
 
 document.getElementById('btnUndo').addEventListener('click', () => send({ type: 'UNDO' }));

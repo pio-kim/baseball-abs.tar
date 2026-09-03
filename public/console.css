@@ -31,6 +31,9 @@ aside h2 { font-size: 12px; color: #9aa0a6; margin: 20px 0 6px; text-transform: 
 aside button, aside select { width: 100%; padding: 9px; margin-bottom: 6px;
   background: #2a2e35; color: inherit; border: 1px solid #3a3f47; border-radius: 6px; cursor: pointer; }
 aside button:disabled { opacity: 0.4; cursor: not-allowed; }
+/* 되돌릴 수 없는 이동이라 눈에 띄게 구분한다. armed 규칙이 이겨야 하므로
+   반드시 그 위에 둔다(같은 명시도라 나중 규칙이 이긴다). */
+aside button.danger { border-color: #6a3a3a; color: #f2a8a8; }
 aside button.armed { background: #7a2c2c; border-color: #a33; }
 aside label { display: block; margin-bottom: 8px; color: #c4c7cc; }
 aside input[type="range"] { width: 100%; }

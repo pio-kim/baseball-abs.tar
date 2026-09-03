@@ -75,31 +75,10 @@ function drawPitch(p, rect, radius, dim) {
   });
 }
 
-function drawLabels(s, rect) {
-  const pitches = currentPitches(s);
-  const strikes = pitches.filter((p) => p.verdict === 'strike').length;
-  const balls = pitches.length - strikes;
-  const inning = s.review ? s.review.inning : s.game.inning;
-
-  shadowed(() => {
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 34px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
-    ctx.fillText(`${inning}회   S ${strikes} · B ${balls}`, rect.cx, rect.cy + rect.halfH + 18);
-  });
-
-  if (s.review) {
-    shadowed(() => {
-      ctx.fillStyle = '#ffd666';
-      ctx.font = 'bold 30px sans-serif';
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'top';
-      ctx.fillText(`${s.review.inning}회 다시보기`, 40, 36);
-    });
-  }
-}
-
+// 송출 화면에는 존 사각형과 공만 남긴다(사용자 결정). 이닝·볼카운트는 물론
+// "N회 다시보기" 라벨도 그리지 않는다.
+// ⚠️ 그래서 오버레이만 보고는 지금이 라이브인지 다시보기인지 알 수 없다.
+// 다시보기 중인지는 콘솔에서만 확인된다(캔버스 위 차단막 + 라이브 복귀 버튼).
 function render(now) {
   ctx.clearRect(0, 0, BASE_W, BASE_H);
   if (snap) {
@@ -115,7 +94,6 @@ function render(now) {
       const grow = 0.6 + 0.4 * t;
       drawPitch(p, rect, baseR * (last ? 1.35 : 1) * grow, !last);
     });
-    drawLabels(s, rect);
   }
   requestAnimationFrame(render);
 }

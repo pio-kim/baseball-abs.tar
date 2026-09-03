@@ -4,6 +4,12 @@ import { createState, transition, canInput, toPublic, DEFAULT_CONFIG } from '../
 
 const P1 = { id: 'p1', seq: 1, x: 0, z: 0, verdict: 'strike' };
 
+// store.saveInning 이 실제로 남기는 모양 — id가 없다.
+const SAVED_TWO = [
+  { seq: 1, x: 0.1, z: 0.2, verdict: 'strike' },
+  { seq: 2, x: 1.5, z: 0.0, verdict: 'ball' },
+];
+
 function endedWith(inning, pitches) {
   const s = createState();
   s.game = { inning, status: 'ended', pitches };
@@ -57,6 +63,105 @@ test('ended에서 다음 이닝은 이닝을 올리고 화면을 지우며 바�
   assert.equal(state.game.inning, 4);
   assert.equal(state.game.status, 'live');
   assert.deepEqual(state.game.pitches, []);
+});
+
+test('다음 이닝은 되돌리기 스택을 비운다', () => {
+  let s = live();
+  s = transition(s, { type: 'PITCH_ADD', x: 0, z: 0 }).state;
+  assert.equal(s.undoStack.length, 1);
+  s = transition(s, { type: 'INNING_END' }).state;
+  s = transition(s, { type: 'INNING_NEXT' }).state;
+  assert.deepEqual(s.undoStack, []);
+});
+
+test('이전 이닝은 이닝을 내리고 저장된 기록을 되살리며 live가 된다', () => {
+  const s = endedWith(3, [P1]);
+  const { state } = transition(s, { type: 'INNING_PREV', pitches: SAVED_TWO });
+  assert.equal(state.game.inning, 2);
+  assert.equal(state.game.status, 'live');
+  assert.equal(canInput(state), true);
+  assert.deepEqual(
+    state.game.pitches.map((p) => [p.x, p.z, p.verdict]),
+    SAVED_TWO.map((p) => [p.x, p.z, p.verdict]),
+  );
+});
+
+test('되살린 공에는 id가 새로 붙어 편집할 수 있다', () => {
+  const { state } = transition(endedWith(3, []), { type: 'INNING_PREV', pitches: SAVED_TWO });
+  // 저장분에는 id가 없다. 없으면 선택·이동·삭제가 전부 동작하지 않는다.
+  assert.ok(state.game.pitches.every((p) => typeof p.id === 'string' && p.id));
+  assert.equal(new Set(state.game.pitches.map((p) => p.id)).size, 2);
+  assert.deepEqual(state.game.pitches.map((p) => p.seq), [1, 2]);
+  const moved = transition(state, {
+    type: 'PITCH_MOVE', id: state.game.pitches[0].id, x: 1.6, z: 0,
+  }).state;
+  assert.equal(moved.game.pitches[0].verdict, 'ball');
+});
+
+test('되살린 공의 id는 기존 nextId와 겹치지 않는다', () => {
+  let s = live();
+  s = transition(s, { type: 'PITCH_ADD', x: 0, z: 0 }).state; // p1, nextId=2
+  s = transition(s, { type: 'INNING_END' }).state;
+  s.game.inning = 4;
+  const { state } = transition(s, { type: 'INNING_PREV', pitches: SAVED_TWO });
+  assert.deepEqual(state.game.pitches.map((p) => p.id), ['p2', 'p3']);
+  assert.equal(state.nextId, 4);
+});
+
+test('저장된 기록이 없으면 이전 이닝은 빈 이닝으로 간다', () => {
+  const { state } = transition(endedWith(2, [P1]), { type: 'INNING_PREV', pitches: [] });
+  assert.equal(state.game.inning, 1);
+  assert.deepEqual(state.game.pitches, []);
+  assert.equal(state.game.status, 'live');
+});
+
+test('1회에서 이전 이닝은 무시되고 경고를 남긴다', () => {
+  const { state, effects } = transition(live(), { type: 'INNING_PREV', pitches: [] });
+  assert.equal(state.game.inning, 1);
+  assert.equal(effects[0].type, 'WARN');
+});
+
+test('이전 이닝은 되돌리기 스택을 비운다', () => {
+  let s = live();
+  s = transition(s, { type: 'PITCH_ADD', x: 0, z: 0 }).state;
+  s.game.inning = 3;
+  const { state } = transition(s, { type: 'INNING_PREV', pitches: [] });
+  assert.deepEqual(state.undoStack, []);
+});
+
+test('이닝 초기화는 1회 idle 빈 화면으로 되돌린다', () => {
+  let s = live();
+  for (const x of [0, 0.2]) s = transition(s, { type: 'PITCH_ADD', x, z: 0 }).state;
+  s.game.inning = 7;
+  const { state, effects } = transition(s, { type: 'INNING_RESET' });
+  assert.equal(state.game.inning, 1);
+  assert.equal(state.game.status, 'idle');
+  assert.deepEqual(state.game.pitches, []);
+  assert.equal(canInput(state), false);
+  assert.deepEqual(state.undoStack, []);
+  // 저장된 기록 파일을 지우지 않는다 — SAVE_INNING 류의 효과가 없어야 한다.
+  assert.deepEqual(effects, []);
+});
+
+test('이닝 초기화는 다시보기에서도 빠져나온다', () => {
+  let s = transition(live(), { type: 'REVIEW_ENTER', inning: 1, pitches: SAVED }).state;
+  const { state } = transition(s, { type: 'INNING_RESET' });
+  assert.equal(state.review, null);
+});
+
+test('이닝 초기화는 설정값을 건드리지 않는다', () => {
+  const s = { ...live(), zone: { aspect: 1.4 }, placement: { x: 0.6, y: 0.4, scale: 0.3 } };
+  const { state } = transition(s, { type: 'INNING_RESET' });
+  assert.deepEqual(state.zone, { aspect: 1.4 });
+  assert.deepEqual(state.placement, { x: 0.6, y: 0.4, scale: 0.3 });
+});
+
+test('이닝 초기화 후 새 공의 id는 이전 공과 겹치지 않는다', () => {
+  let s = transition(live(), { type: 'PITCH_ADD', x: 0, z: 0 }).state; // p1
+  s = transition(s, { type: 'INNING_RESET' }).state;
+  s = transition(s, { type: 'INNING_START' }).state;
+  s = transition(s, { type: 'PITCH_ADD', x: 0, z: 0 }).state;
+  assert.notEqual(s.game.pitches[0].id, 'p1');
 });
 
 test('live에서 다음 이닝은 무시되고 경고를 남긴다', () => {

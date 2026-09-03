@@ -70,8 +70,44 @@ export function transition(state, action) {
 
     case 'INNING_NEXT': {
       if (g.status !== 'ended') return warn(state, '이닝 종료 후에만 다음 이닝으로 갈 수 있습니다');
+      // 되돌리기는 한 이닝 안의 편집에만 의미가 있다. 스택을 넘겨주면 새 이닝에서
+      // Ctrl+Z 한 번에 직전 이닝의 공이 되살아난다.
       return {
-        state: { ...state, game: { inning: g.inning + 1, status: 'live', pitches: [] } },
+        state: { ...state, game: { inning: g.inning + 1, status: 'live', pitches: [] }, undoStack: [] },
+        effects: [],
+      };
+    }
+
+    case 'INNING_PREV': {
+      if (g.inning <= 1) return warn(state, '1회보다 앞선 이닝은 없습니다');
+      // 저장된 기록은 id 없이 보관된다(store.saveInning 이 seq·x·z·verdict 만 남긴다).
+      // 선택·이동·삭제가 전부 id 기준이므로 여기서 새로 부여하지 않으면 되살린 공을
+      // 손댈 수 없다. seq 도 저장분을 믿지 않고 다시 매긴다.
+      const loaded = Array.isArray(action.pitches) ? action.pitches : [];
+      const pitches = loaded.map((p, i) => ({ ...p, id: `p${state.nextId + i}`, seq: i + 1 }));
+      return {
+        state: {
+          ...state,
+          game: { inning: g.inning - 1, status: 'live', pitches },
+          nextId: state.nextId + pitches.length,
+          undoStack: [],
+        },
+        effects: [],
+      };
+    }
+
+    case 'INNING_RESET': {
+      // 저장된 이닝 기록(data/<날짜>.json)은 건드리지 않는다. 되돌릴 수 없는 삭제를
+      // 버튼 하나에 묶지 않기 위해서다 — 다시보기로 계속 꺼내 볼 수 있다.
+      // nextId 는 1로 되돌리지 않는다. 콘솔이 들고 있던 selectedId 와 새 공의 id 가
+      // 겹치면 엉뚱한 공이 선택된 것처럼 보인다.
+      return {
+        state: {
+          ...state,
+          game: { inning: 1, status: 'idle', pitches: [] },
+          review: null,
+          undoStack: [],
+        },
         effects: [],
       };
     }

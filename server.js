@@ -25,7 +25,7 @@ function today() {
   return new Date().toISOString().slice(0, 10);
 }
 
-export function startServer({ port = 3000, dataDir = path.join(HERE, "data"), configPath = path.join(HERE, "config.json"), publicDir = path.join(HERE, "public") } = {}) {
+export function startServer({ port = 3001, dataDir = path.join(HERE, "data"), configPath = path.join(HERE, "config.json"), publicDir = path.join(HERE, "public") } = {}) {
   let state = createState(store.loadConfig(configPath));
 
   const httpServer = http.createServer((req, res) => {
@@ -110,6 +110,12 @@ export function startServer({ port = 3000, dataDir = path.join(HERE, "data"), co
         return;
       }
       a = { ...a, pitches };
+    }
+    // 이전 이닝은 그 이닝의 저장된 기록을 편집 가능한 상태로 되살린다.
+    // REVIEW_ENTER 와 달리 기록이 없어도 막지 않는다 — 종료한 적 없는 이닝으로
+    // 되돌아가는 것 자체는 막을 이유가 없고, 빈 이닝으로 가면 된다.
+    if (a.type === "INNING_PREV") {
+      a = { ...a, pitches: store.loadInning(dataDir, today(), state.game.inning - 1) ?? [] };
     }
     const result = transition(state, a);
     state = result.state;
@@ -201,7 +207,7 @@ export function startServer({ port = 3000, dataDir = path.join(HERE, "data"), co
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const srv = startServer({ port: Number(process.env.PORT ?? 3000) });
+  const srv = startServer({ port: Number(process.env.PORT ?? 3001) });
   await srv.ready;
   console.log(`콘솔:     http://localhost:${srv.port}/console.html`);
   console.log(`오버레이: http://localhost:${srv.port}/overlay.html`);
