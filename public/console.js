@@ -74,8 +74,9 @@ function draw() {
     drawMarker(pos, p.seq, verdict, i === list.length - 1, p.id === local.selectedId);
   });
 
-  const strikes = list.filter((p) => p.verdict === 'strike').length;
-  readout.textContent = `투구 ${list.length} · S ${strikes} · B ${list.length - strikes}`;
+  // 볼카운트(S·B)는 표시하지 않는다(사용자 결정). 투구 수만 남긴다 —
+  // 클릭이 실제로 기록됐는지 확인하는 유일한 즉시 피드백이라 이건 유지한다.
+  readout.textContent = `투구 ${list.length}`;
 }
 
 function drawGhost(p, r) {
